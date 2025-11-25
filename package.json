@@ -3,13 +3,18 @@
   "packageManager": "yarn@4.12.0",
   "version": "1.0.1",
   "dependencies": {
+    "@postman/postman-mcp-server": "^2.4.9",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0"
   },
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "test": "node tests/userController.test.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

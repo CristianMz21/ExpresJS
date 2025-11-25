@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Usuario Parcialmente Actualizado",
+    "email": "usuario1@example.com"
+  },
+  {
+    "id": 2,
+    "name": "Usuario 2",
+    "email": "usuario2@example.com"
+  },
+  {
+    "id": 3,
+    "name": "Test User",
+    "email": "test@example.com"
+  },
+  {
+    "id": 4,
+    "name": "Test User",
+    "email": "test@example.com"
+  },
+  {
+    "id": 5,
+    "name": "Cristian",
+    "email": "1"
+  },
+  {
+    "id": 6,
+    "name": "Valid Name",
+    "email": "valid@example.com"
+  },
+  {
+    "id": 7,
+    "name": "Cristian",
+    "email": "Cristian@h.com"
+  },
+  {
+    "id": 8,
+    "name": "C",
+    "email": "Cristian@h.com"
+  },
+  {
+    "id": 9,
+    "name": "Refactor User",
+    "email": "refactor@example.com"
+  },
+  {
+    "id": 10,
+    "name": "Crud User",
+    "email": "crud@example.com"
+  },
+  {
+    "id": 11,
+    "name": "Crud User",
+    "email": "crud@example.com"
+  },
+  {
+    "id": 12,
+    "name": "Crud User",
+    "email": "crud@example.com"
+  },
+  {
+    "id": 13,
+    "name": "Crud User",
+    "email": "crud@example.com"
+  },
+  {
+    "id": 14,
+    "name": "Crud User",
+    "email": "crud@example.com"
+  },
+  {
+    "id": 15,
+    "name": "Valid Name",
+    "email": "valid@example.com"
+  },
+  {
+    "id": 16,
+    "name": "Full Replace",
+    "email": "replaced@example.com"
+  }
+]

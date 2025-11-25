@@ -1,0 +1,66 @@
+### Obtener página principal
+GET http://localhost:3000/
+
+###
+
+### Obtener usuario por ID
+GET http://localhost:3000/user/1
+###
+
+### Buscar con query parameters (ejemplo)
+GET http://localhost:3000/search?tipo=ejemplo&orden=1
+
+###
+
+### Enviar formulario (POST)
+POST http://localhost:3000/form
+Content-Type: application/json
+
+{
+  "nombre": "Juan Guerra",
+  "email": "juan@ejemplo.com"
+}
+
+###
+
+### Obtener todos los usuarios
+GET http://localhost:3000/users
+
+###
+
+### Crear nuevo usuario
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "name": "Cristian Arellano",
+  "email": "nuevo@example.com"
+}
+
+###
+
+### Actualizar usuario completamente (PUT)
+PUT http://localhost:3000/users/17
+Content-Type: application/json
+
+{
+  "name": "Zaid",
+  "email": "Zaid@example.com"
+}
+
+###
+
+### Actualizar usuario parcialmente (PATCH)
+PATCH http://localhost:3000/users/17
+Content-Type: application/json
+
+{
+  "name": "Usuario Parcialmente Actualizado"
+}
+
+###
+
+### Eliminar usuario
+DELETE http://localhost:3000/users/17
+
+###
