@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// ============================================
+// MODELS - Hospital Database
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  doctor  Doctor?
+  patient Patient?
+
+  @@map("users")
+}
+
+model Patient {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  firstName       String
+  lastName        String
+  dateOfBirth     DateTime
+  gender          Gender
+  phone           String
+  address         String?
+  bloodType       String?
+  allergies       String?
+  medicalHistory  String?
+  emergencyContact String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relaciones
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  medicalRecords MedicalRecord[]
+
+  @@map("patients")
+}
+
+model Doctor {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  firstName      String
+  lastName       String
+  specialization String
+  licenseNumber  String   @unique
+  phone          String
+  email          String   @unique
+  yearsOfExperience Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relaciones
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  medicalRecords MedicalRecord[]
+
+  @@map("doctors")
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  patientId   String
+  doctorId    String
+  dateTime    DateTime
+  duration    Int               @default(30) // minutos
+  reason      String
+  status      AppointmentStatus @default(SCHEDULED)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relaciones
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([dateTime])
+  @@map("appointments")
+}
+
+model MedicalRecord {
+  id          String   @id @default(uuid())
+  patientId   String
+  doctorId    String
+  diagnosis   String
+  treatment   String
+  prescription String?
+  notes       String?
+  visitDate   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("medical_records")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  ADMIN
+  DOCTOR
+  PATIENT
+  USER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}

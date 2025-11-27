@@ -51,7 +51,8 @@ async function runTests() {
     console.log("📝 Test 1: GET /users - Retrieve all users");
     const res = await makeRequest("GET", "/users");
     assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.ok(Array.isArray(res.body), "Should return an array");
+    assert.strictEqual(res.body.status, "success", "Should have success status");
+    assert.ok(Array.isArray(res.body.data.users), "Should return an array of users");
     console.log("✅ PASSED\n");
     passedTests++;
   } catch (error) {
@@ -65,9 +66,10 @@ async function runTests() {
     const userData = { name: "Test User", email: "test@example.com" };
     const res = await makeRequest("POST", "/users", userData);
     assert.strictEqual(res.statusCode, 201, "Should return 201 status");
-    assert.ok(res.body.user, "Should return user object");
-    assert.ok(res.body.user.id, "User should have an ID");
-    testUserId = res.body.user.id; // Save for later tests
+    assert.strictEqual(res.body.status, "success", "Should have success status");
+    assert.ok(res.body.data.user, "Should return user object");
+    assert.ok(res.body.data.user.id, "User should have an ID");
+    testUserId = res.body.data.user.id; // Save for later tests
     console.log(`✅ PASSED (Created user ID: ${testUserId})\n`);
     passedTests++;
   } catch (error) {
@@ -81,9 +83,10 @@ async function runTests() {
     const userData = { name: "Test123", email: "valid@example.com" };
     const res = await makeRequest("POST", "/users", userData);
     assert.strictEqual(res.statusCode, 400, "Should return 400 status");
+    assert.strictEqual(res.body.status, "error", "Should have error status");
     assert.ok(
-      res.body.includes("Invalid name format"),
-      "Should return validation error"
+      res.body.message.includes("inválido") || res.body.message.includes("letras"),
+      "Should return validation error in Spanish"
     );
     console.log("✅ PASSED\n");
     passedTests++;
@@ -98,9 +101,10 @@ async function runTests() {
     const userData = { name: "Valid Name", email: "invalid-email" };
     const res = await makeRequest("POST", "/users", userData);
     assert.strictEqual(res.statusCode, 400, "Should return 400 status");
+    assert.strictEqual(res.body.status, "error", "Should have error status");
     assert.ok(
-      res.body.includes("Invalid email format"),
-      "Should return validation error"
+      res.body.message.includes("email") || res.body.message.includes("válido"),
+      "Should return validation error in Spanish"
     );
     console.log("✅ PASSED\n");
     passedTests++;
@@ -115,16 +119,8 @@ async function runTests() {
     const userData = { name: "Updated User", email: "updated@example.com" };
     const res = await makeRequest("PUT", `/users/${testUserId}`, userData);
     assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.strictEqual(
-      res.body.user.name,
-      "Updated User",
-      "Name should be updated"
-    );
-    assert.strictEqual(
-      res.body.user.email,
-      "updated@example.com",
-      "Email should be updated"
-    );
+    assert.strictEqual(res.body.data.user.name, "Updated User", "Name should be updated");
+    assert.strictEqual(res.body.data.user.email, "updated@example.com", "Email should be updated");
     console.log("✅ PASSED\n");
     passedTests++;
   } catch (error) {
@@ -137,11 +133,7 @@ async function runTests() {
     console.log("📝 Test 6: PUT /users/:id - Partial data should fail");
     const userData = { name: "Only Name" };
     const res = await makeRequest("PUT", `/users/${testUserId}`, userData);
-    assert.strictEqual(
-      res.statusCode,
-      400,
-      "Should return 400 for partial data"
-    );
+    assert.strictEqual(res.statusCode, 400, "Should return 400 for partial data");
     console.log("✅ PASSED\n");
     passedTests++;
   } catch (error) {
@@ -155,16 +147,8 @@ async function runTests() {
     const userData = { name: "Patched Name" };
     const res = await makeRequest("PATCH", `/users/${testUserId}`, userData);
     assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.strictEqual(
-      res.body.user.name,
-      "Patched Name",
-      "Name should be updated"
-    );
-    assert.strictEqual(
-      res.body.user.email,
-      "updated@example.com",
-      "Email should remain unchanged"
-    );
+    assert.strictEqual(res.body.data.user.name, "Patched Name", "Name should be updated");
+    assert.strictEqual(res.body.data.user.email, "updated@example.com", "Email should remain unchanged");
     console.log("✅ PASSED\n");
     passedTests++;
   } catch (error) {
@@ -178,16 +162,8 @@ async function runTests() {
     const userData = { email: "patched@example.com" };
     const res = await makeRequest("PATCH", `/users/${testUserId}`, userData);
     assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.strictEqual(
-      res.body.user.email,
-      "patched@example.com",
-      "Email should be updated"
-    );
-    assert.strictEqual(
-      res.body.user.name,
-      "Patched Name",
-      "Name should remain unchanged"
-    );
+    assert.strictEqual(res.body.data.user.email, "patched@example.com", "Email should be updated");
+    assert.strictEqual(res.body.data.user.name, "Patched Name", "Name should remain unchanged");
     console.log("✅ PASSED\n");
     passedTests++;
   } catch (error) {
@@ -202,7 +178,7 @@ async function runTests() {
     const res = await makeRequest("PATCH", `/users/${testUserId}`, userData);
     assert.strictEqual(res.statusCode, 400, "Should return 400 status");
     assert.ok(
-      res.body.includes("At least one field"),
+      res.body.message.includes("campo") || res.body.message.includes("insuficiente"),
       "Should require at least one field"
     );
     console.log("✅ PASSED\n");
@@ -218,7 +194,7 @@ async function runTests() {
     const res = await makeRequest("DELETE", `/users/${testUserId}`);
     assert.strictEqual(res.statusCode, 200, "Should return 200 status");
     assert.ok(
-      res.body.message.includes("deleted successfully"),
+      res.body.message.includes("eliminado") || res.body.message.includes("deleted"),
       "Should confirm deletion"
     );
     console.log("✅ PASSED\n");

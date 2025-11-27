@@ -28,13 +28,20 @@ GET http://localhost:3000/users
 
 ###
 
+
+
+### Obtener usuario por ID
+GET http://localhost:3000/users/12
+
+###
+
 ### Crear nuevo usuario
 POST http://localhost:3000/users
 Content-Type: application/json
 
 {
   "name": "Cristian Arellano",
-  "email": "nuevo@example.com"
+  "email": "nuevo1@example.com"
 }
 
 ###

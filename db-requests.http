@@ -1,0 +1,264 @@
+### ============================================
+### Database Users API (Prisma) - Test Requests
+### ============================================
+### Base URL
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### Variables (actualizar después de crear usuario)
+@userId = replace-with-actual-uuid
+
+
+### ============================================
+### USERS - Database Operations
+### ============================================
+
+### 1. Get All Database Users
+GET {{baseUrl}}/db-users
+Accept: {{contentType}}
+
+###
+
+### 2. Get User by ID
+GET {{baseUrl}}/db-users/{{userId}}
+Accept: {{contentType}}
+
+###
+
+### 3. Create New User (Role: USER)
+POST {{baseUrl}}/db-users
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "username": "johndoe",
+  "password": "password123",
+  "role": "USER"
+}
+
+###
+
+### 4. Create Admin User
+POST {{baseUrl}}/db-users
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@example.com",
+  "username": "admin",
+  "password": "admin123",
+  "role": "ADMIN"
+}
+
+###
+
+### 5. Create Doctor User
+POST {{baseUrl}}/db-users
+Content-Type: {{contentType}}
+
+{
+  "email": "dr.smith@hospital.com",
+  "username": "drsmith",
+  "password": "doctor123",
+  "role": "DOCTOR"
+}
+
+###
+
+### 6. Create Patient User
+POST {{baseUrl}}/db-users
+Content-Type: {{contentType}}
+
+{
+  "email": "patient@example.com",
+  "username": "patient01",
+  "password": "patient123",
+  "role": "PATIENT"
+}
+
+###
+
+### 7. Update User (Partial)
+PATCH {{baseUrl}}/db-users/{{userId}}
+Content-Type: {{contentType}}
+
+{
+  "email": "updated.email@example.com"
+}
+
+###
+
+### 8. Update User Role
+PATCH {{baseUrl}}/db-users/{{userId}}
+Content-Type: {{contentType}}
+
+{
+  "role": "ADMIN"
+}
+
+###
+
+### 9. Update Multiple Fields
+PATCH {{baseUrl}}/db-users/{{userId}}
+Content-Type: {{contentType}}
+
+{
+  "email": "new.email@example.com",
+  "username": "newusername",
+  "role": "DOCTOR"
+}
+
+###
+
+### 10. Delete User
+DELETE {{baseUrl}}/db-users/{{userId}}
+
+###
+
+
+### ============================================
+### ERROR TESTING
+### ============================================
+
+### Test: Create User with Duplicate Email
+POST {{baseUrl}}/db-users
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "username": "differentuser",
+  "password": "password123"
+}
+
+###
+
+### Test: Create User with Missing Fields
+POST {{baseUrl}}/db-users
+Content-Type: {{contentType}}
+
+{
+  "email": "incomplete@example.com"
+}
+
+###
+
+### Test: Get Non-existent User
+GET {{baseUrl}}/db-users/00000000-0000-0000-0000-000000000000
+Accept: {{contentType}}
+
+###
+
+### Test: Update Non-existent User
+PATCH {{baseUrl}}/db-users/00000000-0000-0000-0000-000000000000
+Content-Type: {{contentType}}
+
+{
+  "email": "test@test.com"
+}
+
+###
+
+### Test: Delete Non-existent User
+DELETE {{baseUrl}}/db-users/00000000-0000-0000-0000-000000000000
+
+###
+
+
+### ============================================
+### PATIENTS - Database Operations (usando Prisma Service)
+### ============================================
+
+### Get All Patients
+GET {{baseUrl}}/api/patients
+Accept: {{contentType}}
+
+###
+
+### Create Patient with User
+POST {{baseUrl}}/api/patients
+Content-Type: {{contentType}}
+
+{
+  "email": "patient.test@example.com",
+  "username": "patient_test",
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe",
+  "dateOfBirth": "1990-01-01",
+  "gender": "MALE",
+  "phone": "555-0123",
+  "address": "123 Main St",
+  "bloodType": "O+",
+  "allergies": "None",
+  "medicalHistory": "Healthy",
+  "emergencyContact": "Jane Doe: 555-0124"
+}
+
+###
+
+
+### ============================================
+### DOCTORS - Database Operations (usando Prisma Service)
+### ============================================
+
+### Get All Doctors
+GET {{baseUrl}}/api/doctors
+Accept: {{contentType}}
+
+###
+
+### Create Doctor with User
+POST {{baseUrl}}/api/doctors
+Content-Type: {{contentType}}
+
+{
+  "email": "dr.house@hospital.com",
+  "username": "drhouse",
+  "password": "password123",
+  "firstName": "Gregory",
+  "lastName": "House",
+  "specialization": "Diagnóstico",
+  "licenseNumber": "MD-12345",
+  "phone": "555-HOUSE",
+  "yearsOfExperience": 15
+}
+
+###
+
+
+### ============================================
+### APPOINTMENTS - Database Operations (usando Prisma Service)
+### ============================================
+
+### Get All Appointments
+GET {{baseUrl}}/api/appointments
+Accept: {{contentType}}
+
+###
+
+### Create Appointment
+POST {{baseUrl}}/api/appointments
+Content-Type: {{contentType}}
+
+{
+  "patientId": "patient-uuid-here",
+  "doctorId": "doctor-uuid-here",
+  "dateTime": "2025-12-01T10:00:00Z",
+  "duration": 30,
+  "reason": "Consulta general",
+  "notes": "Primera visita"
+}
+
+###
+
+
+### ============================================
+### NOTES
+### ============================================
+# 
+# 1. Reemplaza {{userId}} con un UUID real después de crear un usuario
+# 2. Los IDs son UUIDs, no enteros
+# 3. Roles disponibles: USER, ADMIN, DOCTOR, PATIENT
+# 4. Password debe ser hasheado en producción (TODO: bcrypt)
+# 5. Para usar las rutas de Patients/Doctors/Appointments, primero
+#    necesitas ejecutar: yarn db:push
+#

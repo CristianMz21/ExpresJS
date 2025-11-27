@@ -2,10 +2,8 @@ require("dotenv").config({ path: ".env" });
 
 const express = require("express");
 const path = require("path");
-const morgan = require("morgan");
-const helmet = require("helmet");
-const cors = require("cors");
 const routes = require("./routes/index");
+const setupMiddlewares = require("./middlewares");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,26 +13,23 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 // Middlewares
-app.use(morgan("dev")); // Logging
-app.use(helmet()); // Seguridad
-app.use(cors()); // CORS
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
+setupMiddlewares(app);
 
 // Rutas
 app.use("/", routes);
 
+// Manejo de errores
+const { notFoundHandler, errorHandler } = require("./middlewares/errorHandle");
+
 // Manejo de errores 404
-app.use((req, res, next) => {
-  res.status(404).send("404 - Not Found");
-});
+app.use(notFoundHandler);
+
+// Manejo de errores de Prisma
+const prismaErrorHandler = require("./middlewares/prismaErrorHandler");
+app.use(prismaErrorHandler);
 
 // Manejo de errores global
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send("500 - Server Error");
-});
+app.use(errorHandler);
 
 // Iniciar servidor
 app.listen(PORT, () => {

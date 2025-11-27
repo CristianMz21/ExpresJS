@@ -4,6 +4,7 @@
   "version": "1.0.1",
   "dependencies": {
     "@postman/postman-mcp-server": "^2.4.9",
+    "@prisma/client": "5.10.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
@@ -14,10 +15,17 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "node tests/userController.test.js"
+    "test": "node tests/userController.test.js",
+    "db:test": "node test-connection.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "node prisma/seed.js"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "prisma": "5.10.2"
   },
   "engines": {
     "yarn": ">= 4.12.0"

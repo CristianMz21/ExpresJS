@@ -1,185 +1,128 @@
-const { readFile, writeFile } = require("../utils/managerFiles");
+const userService = require("../services/userService");
 const {
-  validateUserData,
-  validateId,
-  validateName,
-  validateEmail,
-} = require("../utils/validators");
+  validateParamId,
+  validateCompleteUserData,
+  validatePartialUpdates,
+  validateAtLeastOneField,
+} = require("../utils/validationHelpers");
+const { catchAsync, ValidationError } = require("../utils/errorHelpers");
 
-// Helper Functions
-const loadUsers = async () => {
-  const data = await readFile("src/data/user.json");
-  if (!data) {
-    throw new Error("Error reading user data");
-  }
-  return JSON.parse(data);
-};
+/**
+ * GET /api/users
+ * Obtiene todos los usuarios
+ */
+const getUsers = catchAsync(async (req, res) => {
+  const users = await userService.getAllUsers();
 
-const saveUsers = async (users) => {
-  await writeFile("src/data/user.json", JSON.stringify(users, null, 2));
-};
+  res.status(200).json({
+    status: "success",
+    results: users.length,
+    data: { users },
+  });
+});
 
-const findUserById = (users, id) => {
-  const userIndex = users.findIndex((u) => u.id === parseInt(id, 10));
-  return userIndex;
-};
+/**
+ * GET /api/users/:id
+ * Obtiene un usuario por ID
+ */
+const getUserById = catchAsync(async (req, res) => {
+  const { id } = req.params;
 
-// Get Users
-const getUsers = async (req, res) => {
-  try {
-    const data = await readFile("src/data/user.json");
-    if (!data) {
-      return res.status(500).send("Error reading user data");
-    }
-    res.type("application/json").send(data);
-  } catch (error) {
-    res.status(500).send("Error reading user data");
-  }
-};
+  validateParamId(id);
+  const user = await userService.getUserById(id);
 
-// Create User
-const createUser = async (req, res) => {
+  res.status(200).json({
+    status: "success",
+    data: { user },
+  });
+});
+
+/**
+ * POST /api/users
+ * Crea un nuevo usuario
+ */
+const createUser = catchAsync(async (req, res) => {
   const { name, email } = req.body;
 
-  const validation = validateUserData(name, email);
-  if (!validation.valid) {
-    return res.status(400).send(validation.error);
-  }
+  validateCompleteUserData(name, email);
 
-  const newUser = { name: name.trim(), email: email.trim() };
+  const newUser = await userService.createUser({ name, email });
 
-  try {
-    const users = await loadUsers();
-    const id = users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1;
-    const userWithId = { id, ...newUser };
-    users.push(userWithId);
+  res.status(201).json({
+    status: "success",
+    message: "Usuario creado exitosamente",
+    data: { user: newUser },
+  });
+});
 
-    await saveUsers(users);
-
-    res
-      .status(201)
-      .json({ message: "User added successfully", user: userWithId });
-  } catch (error) {
-    res.status(500).send("Error processing user data");
-  }
-};
-
-// Put User (Full Replacement)
-const putUser = async (req, res) => {
+/**
+ * PUT /api/users/:id
+ * Reemplaza completamente un usuario
+ */
+const putUser = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { name, email } = req.body;
 
-  const idValidation = validateId(id);
-  if (!idValidation.valid) {
-    return res.status(400).send(idValidation.error);
-  }
+  validateParamId(id);
+  validateCompleteUserData(name, email);
 
-  const dataValidation = validateUserData(name, email);
-  if (!dataValidation.valid) {
-    return res.status(400).send(dataValidation.error);
-  }
+  const updatedUser = await userService.replaceUser(id, { name, email });
 
-  const newUser = { name: name.trim(), email: email.trim() };
+  res.status(200).json({
+    status: "success",
+    message: "Usuario reemplazado exitosamente",
+    data: { user: updatedUser },
+  });
+});
 
-  try {
-    const users = await loadUsers();
-    const userIndex = findUserById(users, id);
-
-    if (userIndex === -1) {
-      return res.status(404).send("User not found");
-    }
-
-    users[userIndex] = { id: parseInt(id, 10), ...newUser };
-    await saveUsers(users);
-
-    res
-      .status(200)
-      .json({ message: "User replaced successfully", user: users[userIndex] });
-  } catch (error) {
-    res.status(500).send("Error processing user data");
-  }
-};
-
-// Patch User (Partial Update)
-const patchUser = async (req, res) => {
+/**
+ * PATCH /api/users/:id
+ * Actualiza parcialmente un usuario
+ */
+const patchUser = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { name, email } = req.body;
 
-  const idValidation = validateId(id);
-  if (!idValidation.valid) {
-    return res.status(400).send(idValidation.error);
+  validateParamId(id);
+  validateAtLeastOneField(req.body, ["name", "email"]);
+
+  // Validar y preparar actualizaciones
+  const { updates, errors } = validatePartialUpdates({ name, email });
+
+  if (errors.length > 0) {
+    throw new ValidationError("Errores de validación", errors);
   }
 
-  if (!name && !email) {
-    return res
-      .status(400)
-      .send("At least one field (name or email) is required.");
-  }
+  const updatedUser = await userService.updateUser(id, updates);
 
-  try {
-    const users = await loadUsers();
-    const userIndex = findUserById(users, id);
+  res.status(200).json({
+    status: "success",
+    message: "Usuario actualizado exitosamente",
+    data: { user: updatedUser },
+  });
+});
 
-    if (userIndex === -1) {
-      return res.status(404).send("User not found");
-    }
-
-    // Validate and update only provided fields
-    const updates = {};
-    if (name !== undefined) {
-      const nameValidation = validateName(name);
-      if (!nameValidation.valid) {
-        return res.status(400).send(nameValidation.error);
-      }
-      updates.name = name.trim();
-    }
-    if (email !== undefined) {
-      const emailValidation = validateEmail(email);
-      if (!emailValidation.valid) {
-        return res.status(400).send(emailValidation.error);
-      }
-      updates.email = email.trim();
-    }
-
-    users[userIndex] = { ...users[userIndex], ...updates };
-    await saveUsers(users);
-
-    res
-      .status(200)
-      .json({ message: "User updated successfully", user: users[userIndex] });
-  } catch (error) {
-    res.status(500).send("Error processing user data");
-  }
-};
-
-// Delete User
-const deleteUser = async (req, res) => {
+/**
+ * DELETE /api/users/:id
+ * Elimina un usuario
+ */
+const deleteUser = catchAsync(async (req, res) => {
   const { id } = req.params;
 
-  const idValidation = validateId(id);
-  if (!idValidation.valid) {
-    return res.status(400).send(idValidation.error);
-  }
+  validateParamId(id);
 
-  try {
-    const users = await loadUsers();
-    const userIndex = findUserById(users, id);
+  const deletedUser = await userService.deleteUser(id);
 
-    if (userIndex === -1) {
-      return res.status(404).send("User not found");
-    }
-
-    users.splice(userIndex, 1);
-    await saveUsers(users);
-
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    res.status(500).send("Error processing user data");
-  }
-};
+  res.status(200).json({
+    status: "success",
+    message: "Usuario eliminado exitosamente",
+    data: { user: deletedUser },
+  });
+});
 
 module.exports = {
   getUsers,
+  getUserById,
   createUser,
   putUser,
   patchUser,

@@ -160,3 +160,19 @@ dist
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node
+
+# ===========================================
+# Docker & Database
+# ===========================================
+# Database backups
+backups/
+*.sql
+*.dump
+
+# pgAdmin data
+pgadmin_data/
+
+# Docker volumes (si se crean localmente)
+postgres_data/
+
+/src/generated/prisma
