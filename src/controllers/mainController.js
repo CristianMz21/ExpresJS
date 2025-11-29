@@ -1,4 +1,4 @@
-const { catchAsync, ValidationError } = require("../utils/errorHelpers");
+const { catchAsync, ValidationError } = require("../utils/errors/errorHelpers");
 
 const home = (req, res) => {
   const data = {
@@ -50,9 +50,6 @@ const handleForm = catchAsync(async (req, res) => {
   if (errors.length > 0) {
     throw new ValidationError("Errores en el formulario", errors);
   }
-
-  console.log("Nombre:", Nombre);
-  console.log("Email:", Email);
 
   res.status(200).json({
     status: "success",

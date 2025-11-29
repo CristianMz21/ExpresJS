@@ -1,5 +1,5 @@
-const { readFile, writeFile } = require("../utils/fileManager");
-const { NotFoundError, ConflictError } = require("../utils/errorHelpers");
+const { readFile, writeFile } = require("../utils/fs/fileManager");
+const { NotFoundError, ConflictError } = require("../utils/errors/errorHelpers");
 
 /**
  * Servicio para manejar la lógica de negocio de usuarios

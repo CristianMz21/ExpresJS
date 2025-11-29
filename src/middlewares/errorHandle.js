@@ -88,6 +88,11 @@ const getErrorColor = (statusCode) => {
  * Formatea el error para logging con colores
  */
 const formatErrorLog = (error, req, statusCode) => {
+  // Skip logging in test environment
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
   const timestamp = new Date().toLocaleString("es-CO", {
     timeZone: "America/Bogota",
     year: "numeric",
@@ -184,7 +189,9 @@ const errorHandler = (error, req, res, next) => {
   }
 
   // Línea separadora
-  console.error(colorize("  └─" + "─".repeat(60), colors.gray));
+  if (process.env.NODE_ENV !== "test") {
+    console.error(colorize("  └─" + "─".repeat(60), colors.gray));
+  }
 
   // Preparar respuesta
   const errorResponse = {

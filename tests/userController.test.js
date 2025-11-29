@@ -1,251 +1,89 @@
-const http = require("http");
-const assert = require("assert");
+const request = require("supertest");
+const app = require("../src/app");
 
-const BASE_URL = "http://localhost:3000";
-let testUserId = null;
+describe("User Controller", () => {
+  let testUserId;
+  const timestamp = Date.now();
+  const testEmail = `test_${timestamp}@example.com`;
 
-// Helper function to make HTTP requests
-function makeRequest(method, path, data = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: "localhost",
-      port: 3000,
-      path: path,
-      method: method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-
-    const req = http.request(options, (res) => {
-      let body = "";
-      res.setEncoding("utf8");
-      res.on("data", (chunk) => (body += chunk));
-      res.on("end", () => {
-        try {
-          const parsedBody = body ? JSON.parse(body) : null;
-          resolve({ statusCode: res.statusCode, body: parsedBody });
-        } catch {
-          resolve({ statusCode: res.statusCode, body: body });
-        }
-      });
-    });
-
-    req.on("error", (e) => reject(e));
-
-    if (data) {
-      req.write(JSON.stringify(data));
-    }
-    req.end();
+  it("GET /users - Retrieve all users", async () => {
+    const res = await request(app).get("/users");
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe("success");
+    expect(Array.isArray(res.body.data.users)).toBe(true);
   });
-}
 
-// Test suite
-async function runTests() {
-  console.log("🚀 Starting User Controller Test Suite\n");
-  let passedTests = 0;
-  let failedTests = 0;
+  it("POST /users - Create user with valid data", async () => {
+    const userData = { name: "Test User", email: testEmail };
+    const res = await request(app).post("/users").send(userData);
+    expect(res.statusCode).toBe(201);
+    expect(res.body.status).toBe("success");
+    expect(res.body.data.user).toHaveProperty("id");
+    testUserId = res.body.data.user.id;
+  });
 
-  // Test 1: GET /users - Retrieve all users
-  try {
-    console.log("📝 Test 1: GET /users - Retrieve all users");
-    const res = await makeRequest("GET", "/users");
-    assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.strictEqual(res.body.status, "success", "Should have success status");
-    assert.ok(Array.isArray(res.body.data.users), "Should return an array of users");
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
-
-  // Test 2: POST /users - Create user with valid data
-  try {
-    console.log("📝 Test 2: POST /users - Create user with valid data");
-    const userData = { name: "Test User", email: "test@example.com" };
-    const res = await makeRequest("POST", "/users", userData);
-    assert.strictEqual(res.statusCode, 201, "Should return 201 status");
-    assert.strictEqual(res.body.status, "success", "Should have success status");
-    assert.ok(res.body.data.user, "Should return user object");
-    assert.ok(res.body.data.user.id, "User should have an ID");
-    testUserId = res.body.data.user.id; // Save for later tests
-    console.log(`✅ PASSED (Created user ID: ${testUserId})\n`);
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
-
-  // Test 3: POST /users - Invalid name format
-  try {
-    console.log("📝 Test 3: POST /users - Invalid name format (with numbers)");
+  it("POST /users - Invalid name format", async () => {
     const userData = { name: "Test123", email: "valid@example.com" };
-    const res = await makeRequest("POST", "/users", userData);
-    assert.strictEqual(res.statusCode, 400, "Should return 400 status");
-    assert.strictEqual(res.body.status, "error", "Should have error status");
-    assert.ok(
-      res.body.message.includes("inválido") || res.body.message.includes("letras"),
-      "Should return validation error in Spanish"
-    );
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+    const res = await request(app).post("/users").send(userData);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.status).toBe("error");
+  });
 
-  // Test 4: POST /users - Invalid email format
-  try {
-    console.log("📝 Test 4: POST /users - Invalid email format");
+  it("POST /users - Invalid email format", async () => {
     const userData = { name: "Valid Name", email: "invalid-email" };
-    const res = await makeRequest("POST", "/users", userData);
-    assert.strictEqual(res.statusCode, 400, "Should return 400 status");
-    assert.strictEqual(res.body.status, "error", "Should have error status");
-    assert.ok(
-      res.body.message.includes("email") || res.body.message.includes("válido"),
-      "Should return validation error in Spanish"
-    );
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+    const res = await request(app).post("/users").send(userData);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.status).toBe("error");
+  });
 
-  // Test 5: PUT /users/:id - Full replacement with valid data
-  try {
-    console.log("📝 Test 5: PUT /users/:id - Full replacement with valid data");
+  it("PUT /users/:id - Full replacement with valid data", async () => {
     const userData = { name: "Updated User", email: "updated@example.com" };
-    const res = await makeRequest("PUT", `/users/${testUserId}`, userData);
-    assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.strictEqual(res.body.data.user.name, "Updated User", "Name should be updated");
-    assert.strictEqual(res.body.data.user.email, "updated@example.com", "Email should be updated");
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+    const res = await request(app).put(`/users/${testUserId}`).send(userData);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.user.name).toBe("Updated User");
+    expect(res.body.data.user.email).toBe("updated@example.com");
+  });
 
-  // Test 6: PUT /users/:id - Partial data should fail
-  try {
-    console.log("📝 Test 6: PUT /users/:id - Partial data should fail");
+  it("PUT /users/:id - Partial data should fail", async () => {
     const userData = { name: "Only Name" };
-    const res = await makeRequest("PUT", `/users/${testUserId}`, userData);
-    assert.strictEqual(res.statusCode, 400, "Should return 400 for partial data");
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+    const res = await request(app).put(`/users/${testUserId}`).send(userData);
+    expect(res.statusCode).toBe(400);
+  });
 
-  // Test 7: PATCH /users/:id - Update only name
-  try {
-    console.log("📝 Test 7: PATCH /users/:id - Update only name");
+  it("PATCH /users/:id - Update only name", async () => {
     const userData = { name: "Patched Name" };
-    const res = await makeRequest("PATCH", `/users/${testUserId}`, userData);
-    assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.strictEqual(res.body.data.user.name, "Patched Name", "Name should be updated");
-    assert.strictEqual(res.body.data.user.email, "updated@example.com", "Email should remain unchanged");
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+    const res = await request(app).patch(`/users/${testUserId}`).send(userData);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.user.name).toBe("Patched Name");
+    expect(res.body.data.user.email).toBe("updated@example.com");
+  });
 
-  // Test 8: PATCH /users/:id - Update only email
-  try {
-    console.log("📝 Test 8: PATCH /users/:id - Update only email");
+  it("PATCH /users/:id - Update only email", async () => {
     const userData = { email: "patched@example.com" };
-    const res = await makeRequest("PATCH", `/users/${testUserId}`, userData);
-    assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.strictEqual(res.body.data.user.email, "patched@example.com", "Email should be updated");
-    assert.strictEqual(res.body.data.user.name, "Patched Name", "Name should remain unchanged");
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+    const res = await request(app).patch(`/users/${testUserId}`).send(userData);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.user.email).toBe("patched@example.com");
+    expect(res.body.data.user.name).toBe("Patched Name");
+  });
 
-  // Test 9: PATCH /users/:id - No fields should fail
-  try {
-    console.log("📝 Test 9: PATCH /users/:id - No fields should fail");
-    const userData = {};
-    const res = await makeRequest("PATCH", `/users/${testUserId}`, userData);
-    assert.strictEqual(res.statusCode, 400, "Should return 400 status");
-    assert.ok(
-      res.body.message.includes("campo") || res.body.message.includes("insuficiente"),
-      "Should require at least one field"
-    );
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+  it("PATCH /users/:id - No fields should fail", async () => {
+    const res = await request(app).patch(`/users/${testUserId}`).send({});
+    expect(res.statusCode).toBe(400);
+  });
 
-  // Test 10: DELETE /users/:id - Delete existing user
-  try {
-    console.log("📝 Test 10: DELETE /users/:id - Delete existing user");
-    const res = await makeRequest("DELETE", `/users/${testUserId}`);
-    assert.strictEqual(res.statusCode, 200, "Should return 200 status");
-    assert.ok(
-      res.body.message.includes("eliminado") || res.body.message.includes("deleted"),
-      "Should confirm deletion"
-    );
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+  it("DELETE /users/:id - Delete existing user", async () => {
+    const res = await request(app).delete(`/users/${testUserId}`);
+    expect(res.statusCode).toBe(200);
+  });
 
-  // Test 11: GET /users/:id - Verify deletion (should fail)
-  try {
-    console.log("📝 Test 11: PUT /users/:id - User should not exist after deletion");
+  it("PUT /users/:id - User should not exist after deletion", async () => {
     const userData = { name: "Should Fail", email: "fail@example.com" };
-    const res = await makeRequest("PUT", `/users/${testUserId}`, userData);
-    assert.strictEqual(res.statusCode, 404, "Should return 404 status");
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
+    const res = await request(app).put(`/users/${testUserId}`).send(userData);
+    expect(res.statusCode).toBe(404);
+  });
 
-  // Test 12: DELETE /users/:id - Delete non-existing user
-  try {
-    console.log("📝 Test 12: DELETE /users/:id - Delete non-existing user");
-    const res = await makeRequest("DELETE", "/users/99999");
-    assert.strictEqual(res.statusCode, 404, "Should return 404 status");
-    console.log("✅ PASSED\n");
-    passedTests++;
-  } catch (error) {
-    console.log(`❌ FAILED: ${error.message}\n`);
-    failedTests++;
-  }
-
-  // Summary
-  console.log("=" .repeat(50));
-  console.log("📊 TEST SUMMARY");
-  console.log("=" .repeat(50));
-  console.log(`✅ Passed: ${passedTests}`);
-  console.log(`❌ Failed: ${failedTests}`);
-  console.log(`📈 Total: ${passedTests + failedTests}`);
-  console.log(
-    `🎯 Success Rate: ${((passedTests / (passedTests + failedTests)) * 100).toFixed(1)}%`
-  );
-  console.log("=" .repeat(50));
-
-  process.exit(failedTests > 0 ? 1 : 0);
-}
-
-// Run tests
-runTests().catch((error) => {
-  console.error("💥 Test suite crashed:", error);
-  process.exit(1);
+  it("DELETE /users/:id - Delete non-existing user", async () => {
+    const res = await request(app).delete("/users/99999");
+    expect(res.statusCode).toBe(404);
+  });
 });

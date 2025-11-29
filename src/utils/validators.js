@@ -1,276 +1,104 @@
 /**
- * Utilidades de validación para datos de usuario
- * Proporciona funciones para validar nombres, emails, IDs y datos completos
+ * Generic Validation Utilities
+ * Pure functions that return boolean or simple validation results.
+ * No business logic or error throwing here.
  */
 
-// Expresiones regulares para validación
+// Regular expressions
 const REGEX = {
-  // Nombre: letras, espacios, acentos, ñ (mínimo 2 caracteres)
+  // Name: letters, spaces, accents, ñ (min 2 chars)
   name: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,50}$/,
   
-  // Email: formato estándar RFC 5322 simplificado
+  // Email: standard RFC 5322 simplified
   email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   
-  // ID: solo números positivos
+  // ID: positive numbers only
   id: /^[1-9][0-9]*$/,
-};
-
-// Constantes de validación
-const VALIDATION_RULES = {
-  name: {
-    minLength: 2,
-    maxLength: 50,
-  },
-  email: {
-    minLength: 5,
-    maxLength: 100,
-  },
-  id: {
-    min: 1,
-    max: Number.MAX_SAFE_INTEGER,
-  },
+  
+  // UUID v4
+  uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  
+  // Username: alphanumeric, underscores, hyphens (min 2 chars)
+  username: /^[a-zA-Z0-9_-]{2,50}$/
 };
 
 /**
- * Valida el nombre de un usuario
- * @param {string} name - Nombre a validar
- * @returns {Object} { valid: boolean, error?: string }
+ * Validates if a string matches name format
+ * @param {string} name 
+ * @returns {boolean}
  */
-const validateName = (name) => {
-  // Verificar que existe
-  if (!name) {
-    return {
-      valid: false,
-      error: "El nombre es requerido",
-    };
-  }
-
-  // Verificar tipo
-  if (typeof name !== "string") {
-    return {
-      valid: false,
-      error: "El nombre debe ser una cadena de texto",
-    };
-  }
-
-  // Limpiar espacios
-  const trimmedName = name.trim();
-
-  // Verificar longitud mínima
-  if (trimmedName.length < VALIDATION_RULES.name.minLength) {
-    return {
-      valid: false,
-      error: `El nombre debe tener al menos ${VALIDATION_RULES.name.minLength} caracteres`,
-    };
-  }
-
-  // Verificar longitud máxima
-  if (trimmedName.length > VALIDATION_RULES.name.maxLength) {
-    return {
-      valid: false,
-      error: `El nombre no puede exceder ${VALIDATION_RULES.name.maxLength} caracteres`,
-    };
-  }
-
-  // Verificar formato
-  if (!REGEX.name.test(trimmedName)) {
-    return {
-      valid: false,
-      error: "El nombre solo puede contener letras y espacios",
-    };
-  }
-
-  return { valid: true };
+const isValidName = (name) => {
+  if (!name || typeof name !== "string") return false;
+  return REGEX.name.test(name.trim());
 };
 
 /**
- * Valida el email de un usuario
- * @param {string} email - Email a validar
- * @returns {Object} { valid: boolean, error?: string }
+ * Validates if a string matches username format
+ * @param {string} username 
+ * @returns {boolean}
  */
-const validateEmail = (email) => {
-  // Verificar que existe
-  if (!email) {
-    return {
-      valid: false,
-      error: "El email es requerido",
-    };
-  }
-
-  // Verificar tipo
-  if (typeof email !== "string") {
-    return {
-      valid: false,
-      error: "El email debe ser una cadena de texto",
-    };
-  }
-
-  // Limpiar espacios
-  const trimmedEmail = email.trim();
-
-  // Verificar longitud mínima
-  if (trimmedEmail.length < VALIDATION_RULES.email.minLength) {
-    return {
-      valid: false,
-      error: "El email es demasiado corto",
-    };
-  }
-
-  // Verificar longitud máxima
-  if (trimmedEmail.length > VALIDATION_RULES.email.maxLength) {
-    return {
-      valid: false,
-      error: `El email no puede exceder ${VALIDATION_RULES.email.maxLength} caracteres`,
-    };
-  }
-
-  // Verificar formato
-  if (!REGEX.email.test(trimmedEmail)) {
-    return {
-      valid: false,
-      error: "El formato del email no es válido",
-    };
-  }
-
-  return { valid: true };
+const isValidUsername = (username) => {
+  if (!username || typeof username !== "string") return false;
+  return REGEX.username.test(username.trim());
 };
 
 /**
- * Valida un ID numérico
- * @param {string|number} id - ID a validar
- * @returns {Object} { valid: boolean, error?: string }
+ * Validates email format
+ * @param {string} email 
+ * @returns {boolean}
  */
-const validateId = (id) => {
-  // Verificar que existe
-  if (id === undefined || id === null || id === "") {
-    return {
-      valid: false,
-      error: "El ID es requerido",
-    };
-  }
-
-  // Convertir a string para validación
-  const idString = String(id);
-
-  // Verificar formato (solo números, no puede empezar con 0)
-  if (!REGEX.id.test(idString)) {
-    return {
-      valid: false,
-      error: "El ID debe ser un número positivo válido",
-    };
-  }
-
-  // Convertir a número para validación de rango
-  const idNumber = parseInt(idString, 10);
-
-  // Verificar que es un número válido
-  if (isNaN(idNumber)) {
-    return {
-      valid: false,
-      error: "El ID no es un número válido",
-    };
-  }
-
-  // Verificar rango mínimo
-  if (idNumber < VALIDATION_RULES.id.min) {
-    return {
-      valid: false,
-      error: "El ID debe ser mayor a 0",
-    };
-  }
-
-  // Verificar rango máximo (evitar overflow)
-  if (idNumber > VALIDATION_RULES.id.max) {
-    return {
-      valid: false,
-      error: "El ID excede el valor máximo permitido",
-    };
-  }
-
-  return { valid: true };
+const isValidEmail = (email) => {
+  if (!email || typeof email !== "string") return false;
+  return REGEX.email.test(email.trim());
 };
 
 /**
- * Valida los datos completos de un usuario (nombre y email)
- * @param {string} name - Nombre del usuario
- * @param {string} email - Email del usuario
- * @returns {Object} { valid: boolean, error?: string, errors?: Array }
+ * Validates if ID is a positive integer or UUID
+ * @param {string|number} id 
+ * @returns {boolean}
  */
-const validateUserData = (name, email) => {
-  const errors = [];
+const isValidId = (id) => {
+  if (id === undefined || id === null || id === "") return false;
 
-  // Validar nombre
-  const nameValidation = validateName(name);
-  if (!nameValidation.valid) {
-    errors.push(nameValidation.error);
+  // Check numeric ID
+  if (!isNaN(id) && Number(id) > 0 && Number.isInteger(Number(id))) {
+    return true;
   }
 
-  // Validar email
-  const emailValidation = validateEmail(email);
-  if (!emailValidation.valid) {
-    errors.push(emailValidation.error);
-  }
-
-  // Si hay errores, retornar el primero (para compatibilidad)
-  if (errors.length > 0) {
-    return {
-      valid: false,
-      error: errors[0],
-      errors: errors,
-    };
-  }
-
-  return { valid: true };
+  // Check UUID (any standard version)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(String(id));
 };
 
 /**
- * Valida una cadena de texto genérica
- * @param {string} value - Valor a validar
- * @param {Object} options - Opciones de validación
- * @param {number} options.minLength - Longitud mínima
- * @param {number} options.maxLength - Longitud máxima
- * @param {string} options.fieldName - Nombre del campo para mensajes
- * @returns {Object} { valid: boolean, error?: string }
+ * Validates if a value is a positive number
+ * @param {any} value 
+ * @returns {boolean}
  */
-const validateString = (value, options = {}) => {
-  const {
-    minLength = 1,
-    maxLength = 255,
-    fieldName = "El campo",
-  } = options;
+const isPositiveNumber = (value) => {
+  const num = Number(value);
+  return !isNaN(num) && num > 0 && isFinite(num);
+};
 
-  if (!value || typeof value !== "string") {
-    return {
-      valid: false,
-      error: `${fieldName} es requerido`,
-    };
-  }
-
-  const trimmedValue = value.trim();
-
-  if (trimmedValue.length < minLength) {
-    return {
-      valid: false,
-      error: `${fieldName} debe tener al menos ${minLength} caracteres`,
-    };
-  }
-
-  if (trimmedValue.length > maxLength) {
-    return {
-      valid: false,
-      error: `${fieldName} no puede exceder ${maxLength} caracteres`,
-    };
-  }
-
-  return { valid: true };
+/**
+ * Checks if string length is within range
+ * @param {string} str 
+ * @param {number} min 
+ * @param {number} max 
+ * @returns {boolean}
+ */
+const isValidLength = (str, min = 0, max = Infinity) => {
+  if (typeof str !== "string") return false;
+  const length = str.trim().length;
+  return length >= min && length <= max;
 };
 
 module.exports = {
-  validateName,
-  validateEmail,
-  validateId,
-  validateUserData,
-  validateString,
-  REGEX,
-  VALIDATION_RULES,
+  isValidName,
+  isValidUsername,
+  isValidEmail,
+  isValidId,
+  isPositiveNumber,
+  isValidLength,
+  REGEX
 };

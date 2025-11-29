@@ -1,27 +1,30 @@
-const prisma = require("../utils/prismaClient");
-const { catchAsync } = require("../utils/errorHelpers");
+const { catchAsync, ValidationError } = require("../utils/errors/errorHelpers");
+const { isUuid } = require("../utils/validation/validators");
+const dbUserService = require("../services/dbUserService");
+const {
+  validateCreateUser: validateUserRegistrationData,
+  validateUpdateUser: validateUserProfileUpdates,
+  validatePasswordChange: validateUserPasswordChange,
+  validateLogin: validateUserLoginCredentials,
+} = require("../validation/users/dbUser.validators");
 
 /**
- * Controlador para manejar operaciones de usuarios desde la base de datos con Prisma
- * Separado del userController.js que usa archivos JSON
+ * Database User Controller
+ * Handles user operations via DbUserService
  */
+
+const ensureValidUuid = (id) => {
+  if (!isUuid(String(id))) {
+    throw new ValidationError("El ID proporcionado no es válido");
+  }
+};
 
 /**
  * GET /api/db-users
- * Obtiene todos los usuarios desde la base de datos
+ * Retrieves all users from database
  */
 const getAllDbUsers = catchAsync(async (req, res) => {
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-      // Excluir password por seguridad
-    },
-  });
+  const users = await dbUserService.getAllUsers();
 
   res.status(200).json({
     status: "success",
@@ -32,29 +35,13 @@ const getAllDbUsers = catchAsync(async (req, res) => {
 
 /**
  * GET /api/db-users/:id
- * Obtiene un usuario por ID desde la base de datos
+ * Retrieves a single user by ID
  */
 const getDbUserById = catchAsync(async (req, res) => {
   const { id } = req.params;
+  ensureValidUuid(id);
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  if (!user) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Usuario no encontrado",
-    });
-  }
+  const user = await dbUserService.getUserById(id);
 
   res.status(200).json({
     status: "success",
@@ -64,36 +51,14 @@ const getDbUserById = catchAsync(async (req, res) => {
 
 /**
  * POST /api/db-users
- * Crea un nuevo usuario en la base de datos
+ * Creates a new user in the database
  */
 const createDbUser = catchAsync(async (req, res) => {
-  const { email, username, password, role = "USER" } = req.body;
+  // Validate input
+  validateUserRegistrationData(req.body);
 
-  // Validación básica
-  if (!email || !username || !password) {
-    return res.status(400).json({
-      status: "fail",
-      message: "Email, username y password son requeridos",
-    });
-  }
-
-  // Crear usuario
-  const user = await prisma.user.create({
-    data: {
-      email,
-      username,
-      password, // TODO: Hashear con bcrypt en producción
-      role,
-    },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  // Create user via service
+  const user = await dbUserService.createUser(req.body);
 
   res.status(201).json({
     status: "success",
@@ -104,27 +69,17 @@ const createDbUser = catchAsync(async (req, res) => {
 
 /**
  * PATCH /api/db-users/:id
- * Actualiza un usuario existente
+ * Updates a user (partial update)
  */
 const updateDbUser = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
+  ensureValidUuid(id);
 
-  // No permitir actualizar el password sin validación adicional
-  delete updates.password;
+  // Validate and sanitize input
+  const sanitizedUpdates = validateUserProfileUpdates(req.body);
 
-  const user = await prisma.user.update({
-    where: { id },
-    data: updates,
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  // Update via service
+  const user = await dbUserService.updateUser(id, sanitizedUpdates);
 
   res.status(200).json({
     status: "success",
@@ -134,23 +89,69 @@ const updateDbUser = catchAsync(async (req, res) => {
 });
 
 /**
+ * PATCH /api/db-users/:id/password
+ * Updates user password
+ */
+const updateDbUserPassword = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  ensureValidUuid(id);
+
+  // Validate input
+  validateUserPasswordChange(req.body);
+
+  const { currentPassword, newPassword } = req.body;
+
+  // Update password via service
+  await dbUserService.updatePassword(id, currentPassword, newPassword);
+
+  res.status(200).json({
+    status: "success",
+    message: "Contraseña actualizada exitosamente",
+  });
+});
+
+/**
  * DELETE /api/db-users/:id
- * Elimina un usuario
+ * Deletes a user
  */
 const deleteDbUser = catchAsync(async (req, res) => {
   const { id } = req.params;
+  ensureValidUuid(id);
 
-  await prisma.user.delete({
-    where: { id },
-  });
+  await dbUserService.deleteUser(id);
 
   res.status(204).send();
 });
+
+/**
+ * POST /api/db-users/login
+ * Authenticates a user and returns JWT token
+ */
+const loginDbUser = catchAsync(async (req, res) => {
+  // Validate input
+  validateUserLoginCredentials(req.body);
+
+  const { email, password } = req.body;
+
+  // Authenticate via service
+  const { user, token } = await dbUserService.authenticateUser(email, password);
+
+  res.status(200).json({
+    status: "success",
+    message: "Login exitoso",
+    token,
+    data: user,
+  });
+});
+
+// ==================== EXPORTS ====================
 
 module.exports = {
   getAllDbUsers,
   getDbUserById,
   createDbUser,
   updateDbUser,
+  updateDbUserPassword,
   deleteDbUser,
+  loginDbUser,
 };

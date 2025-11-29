@@ -78,5 +78,29 @@
     "id": 16,
     "name": "Cristian Arellano",
     "email": "nuevo@example.com"
+  },
+  {
+    "id": 17,
+    "name": "Test User",
+    "email": "test_1764348948565@example.com",
+    "createdAt": "2025-11-28T16:55:48.624Z"
+  },
+  {
+    "id": 18,
+    "name": "Test User",
+    "email": "test_1764349167028@example.com",
+    "createdAt": "2025-11-28T16:59:27.047Z"
+  },
+  {
+    "id": 19,
+    "name": "Test User",
+    "email": "test_1764349545207@example.com",
+    "createdAt": "2025-11-28T17:05:45.227Z"
+  },
+  {
+    "id": 20,
+    "name": "Test User",
+    "email": "test_1764349659903@example.com",
+    "createdAt": "2025-11-28T17:07:39.926Z"
   }
 ]

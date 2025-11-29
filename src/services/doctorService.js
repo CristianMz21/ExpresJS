@@ -1,5 +1,5 @@
 const prisma = require("../utils/prismaClient");
-const { NotFoundError, ConflictError } = require("../utils/errorHelpers");
+const { NotFoundError, ConflictError } = require("../utils/errors/errorHelpers");
 
 /**
  * Servicio para manejar la lógica de negocio de doctores usando Prisma

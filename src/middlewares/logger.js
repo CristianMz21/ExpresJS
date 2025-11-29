@@ -73,6 +73,11 @@ const formatDuration = (duration) => {
  * Middleware de logging personalizado con colores
  */
 const LoggerMiddleware = (req, res, next) => {
+  // Skip logging in test environment
+  if (process.env.NODE_ENV === "test") {
+    return next();
+  }
+
   const timestamp = new Date().toLocaleString("es-CO", {
     timeZone: "America/Bogota",
     year: "numeric",

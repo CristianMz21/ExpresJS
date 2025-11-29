@@ -176,3 +176,5 @@ pgadmin_data/
 postgres_data/
 
 /src/generated/prisma
+
+GEMINI.md

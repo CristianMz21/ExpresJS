@@ -53,43 +53,7 @@ const validateRequiredFields = (data, requiredFields) => {
   }
 };
 
-/**
- * Valida formato de email
- * @param {string} email - Email a validar
- * @returns {boolean} True si es válido
- * @example
- * if (!isValidEmail(user.email)) {
- *   throw new ValidationError('Email inválido');
- * }
- */
-const isValidEmail = (email) => {
-  if (!email || typeof email !== "string") return false;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-};
 
-/**
- * Valida que un ID sea válido (numérico o UUID)
- * @param {string|number} id - ID a validar
- * @returns {boolean} True si es válido
- * @example
- * if (!isValidId(req.params.id)) {
- *   throw new ValidationError('ID inválido');
- * }
- */
-const isValidId = (id) => {
-  if (id === undefined || id === null || id === "") return false;
-
-  // Validar ID numérico positivo
-  if (!isNaN(id) && Number(id) > 0 && Number.isInteger(Number(id))) {
-    return true;
-  }
-
-  // Validar UUID v4
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(String(id));
-};
 
 /**
  * Sanitiza una cadena de texto eliminando espacios y caracteres peligrosos
@@ -99,47 +63,6 @@ const isValidId = (id) => {
 const sanitizeString = (str) => {
   if (!str || typeof str !== "string") return "";
   return str.trim().replace(/[<>]/g, "");
-};
-
-/**
- * Valida que un valor sea un número positivo
- * @param {any} value - Valor a validar
- * @returns {boolean} True si es un número positivo
- */
-const isPositiveNumber = (value) => {
-  const num = Number(value);
-  return !isNaN(num) && num > 0 && isFinite(num);
-};
-
-/**
- * Valida que un valor sea un número entero
- * @param {any} value - Valor a validar
- * @returns {boolean} True si es un número entero
- */
-const isInteger = (value) => {
-  return Number.isInteger(Number(value));
-};
-
-/**
- * Valida longitud de cadena
- * @param {string} str - Cadena a validar
- * @param {number} min - Longitud mínima
- * @param {number} max - Longitud máxima
- * @returns {boolean} True si cumple con la longitud
- */
-const isValidLength = (str, min = 0, max = Infinity) => {
-  if (typeof str !== "string") return false;
-  const length = str.trim().length;
-  return length >= min && length <= max;
-};
-
-/**
- * Valida que un objeto tenga al menos una propiedad
- * @param {Object} obj - Objeto a validar
- * @returns {boolean} True si tiene propiedades
- */
-const hasProperties = (obj) => {
-  return obj && typeof obj === "object" && Object.keys(obj).length > 0;
 };
 
 /**
@@ -190,15 +113,8 @@ module.exports = {
   validateRequiredFields,
   throwValidationErrors,
 
-  // Validadores
-  isValidEmail,
-  isValidId,
-  isPositiveNumber,
-  isInteger,
-  isValidLength,
-  hasProperties,
-
   // Sanitización
   sanitizeString,
   sanitizeInput,
 };
+

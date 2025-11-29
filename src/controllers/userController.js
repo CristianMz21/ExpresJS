@@ -1,11 +1,11 @@
-const userService = require("../services/userService");
+const userService = require("../services/jsonUserService");
 const {
   validateParamId,
-  validateCompleteUserData,
-  validatePartialUpdates,
-  validateAtLeastOneField,
-} = require("../utils/validationHelpers");
-const { catchAsync, ValidationError } = require("../utils/errorHelpers");
+  validateCompleteUserData: validateJsonUserCompleteData,
+  validatePartialUpdates: validateJsonUserPartialUpdates,
+  validateAtLeastOneField: validateJsonUserAtLeastOneField,
+} = require("../validation/users/jsonUser.validators");
+const { catchAsync, ValidationError } = require("../utils/errors/errorHelpers");
 
 /**
  * GET /api/users
@@ -44,7 +44,7 @@ const getUserById = catchAsync(async (req, res) => {
 const createUser = catchAsync(async (req, res) => {
   const { name, email } = req.body;
 
-  validateCompleteUserData(name, email);
+  validateJsonUserCompleteData(name, email);
 
   const newUser = await userService.createUser({ name, email });
 
@@ -64,7 +64,7 @@ const putUser = catchAsync(async (req, res) => {
   const { name, email } = req.body;
 
   validateParamId(id);
-  validateCompleteUserData(name, email);
+  validateJsonUserCompleteData(name, email);
 
   const updatedUser = await userService.replaceUser(id, { name, email });
 
@@ -84,10 +84,10 @@ const patchUser = catchAsync(async (req, res) => {
   const { name, email } = req.body;
 
   validateParamId(id);
-  validateAtLeastOneField(req.body, ["name", "email"]);
+  validateJsonUserAtLeastOneField(req.body, ["name", "email"]);
 
   // Validar y preparar actualizaciones
-  const { updates, errors } = validatePartialUpdates({ name, email });
+  const { updates, errors } = validateJsonUserPartialUpdates({ name, email });
 
   if (errors.length > 0) {
     throw new ValidationError("Errores de validación", errors);
